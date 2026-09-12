@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>منظم المهام الأسبوعي PWA</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="جدولي">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card-bg: #182232;
+            --card-bg-hover: #1f2d42;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --success: #10b981;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #26334d;
+            --completed-bg: rgba(16, 185, 129, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 16px;
+            padding-bottom: 40px;
+            direction: rtl;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        .icon-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        /* Progress Card */
+        .progress-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .progress-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .progress-percentage {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .progress-bar-container {
+            width: 100px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        /* Days Selector */
+        .day-selector {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            scrollbar-width: none;
+        }
+
+        .day-selector::-webkit-scrollbar { display: none; }
+
+        .day-btn {
+            background: var(--card-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 12px;
+            white-space: nowrap;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .day-btn.active {
+            background: var(--accent);
+            color: #0b0f19;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Task Cards */
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .schedule-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.25s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .schedule-card.completed {
+            background: var(--completed-bg);
+            border-color: rgba(16, 185, 129, 0.3);
+            opacity: 0.75;
+        }
+
+        .schedule-card.completed .activity-title {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .card-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .checkbox-wrapper {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .schedule-card.completed .checkbox-wrapper {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        .icon-box {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .schedule-card.completed .icon-box {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .activity-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .task-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .time-badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 6px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .schedule-card.completed .time-badge {
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.03);
+            border-color: transparent;
+        }
+
+        /* PWA Banner */
+        .pwa-banner {
+            display: none;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .pwa-banner button {
+            background: white;
+            color: #2563eb;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1><i data-lucide="calendar-check-2"></i> جدولي الأسبوعي</h1>
+        <div class="actions-bar">
+            <button class="icon-btn" id="notifBtn" onclick="toggleNotifications()">
+                <i data-lucide="bell"></i> الإشعارات
+            </button>
+        </div>
+    </div>
+
+    <div class="pwa-banner" id="pwaBanner">
+        <span>📲 قم بتثبيت التطبيق على شاشة هاتفك الرئيسية</span>
+        <button onclick="installPWA()">تثبيت</button>
+    </div>
+
+    <!-- Progress Dashboard -->
+    <div class="progress-card">
+        <div class="progress-info">
+            <span class="progress-title">نسبة الإنجاز لهذا اليوم</span>
+            <span class="progress-percentage" id="progressPercent">0%</span>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
+        <div style="color: var(--accent); opacity: 0.8;">
+            <i data-lucide="trophy" style="width: 42px; height: 42px;"></i>
+        </div>
+    </div>
+
+    <!-- Day Navigation -->
+    <div class="day-selector" id="daySelector"></div>
+
+    <!-- Task List Container -->
+    <div class="schedule-list" id="scheduleContainer"></div>
+
+    <script>
+        const scheduleData = {
+            "السبت": [
+                { id: "sat_1", icon: "activity", title: "تمارين", time: "6:00–6:30", task: "تمرين صباحي" },
+                { id: "sat_2", icon: "school", title: "مدرسة", time: "7:00–1:00", task: "المدرسة" },
+                { id: "sat_3", icon: "utensils", title: "غداء وراحة", time: "1:00–2:00", task: "غداء + راحة" },
+                { id: "sat_4", icon: "code", title: "برمجة", time: "2:00–4:00", task: "برمجة" },
+                { id: "sat_5", icon: "book-open", title: "واجبات", time: "4:00–5:00", task: "واجبات + تقويمات" },
+                { id: "sat_6", icon: "languages", title: "عربي", time: "5:00–8:00", task: "مذاكرة العربي" },
+                { id: "sat_7", icon: "pen-tool", title: "كتابة", time: "8:00–9:00", task: "كتابة" },
+                { id: "sat_8", icon: "moon", title: "راحة", time: "9:00–10:00", task: "بدون شاشات" }
+            ],
+            "الأحد": [
+                { id: "sun_1", icon: "activity", title: "تمارين", time: "6:00–6:30", task: "تمرين صباحي" },
+                { id: "sun_2", icon: "school", title: "مدرسة", time: "7:00–1:00", task: "المدرسة" },
+                { id: "sun_3", icon: "utensils", title: "غداء وراحة", time: "1:00–2:00", task: "غداء + راحة" },
+                { id: "sun_4", icon: "code", title: "برمجة", time: "2:00–4:00", task: "برمجة" },
+                { id: "sun_5", icon: "book-open", title: "واجبات", time: "4:00–5:00", task: "واجبات + تقويمات" },
+                { id: "sun_6", icon: "calculator", title: "رياضيات", time: "5:00–8:00", task: "مذاكرة الرياضيات" },
+                { id: "sun_7", icon: "coffee", title: "راحة", time: "8:00–9:00", task: "وقت شخصي" },
+                { id: "sun_8", icon: "moon", title: "راحة", time: "9:00–10:00", task: "بدون شاشات" }
+            ],
+            "الاثنين": [
+                { id: "mon_1", icon: "activity", title: "تمارين", time: "6:00–6:30", task: "تمرين صباحي" },
+                { id: "mon_2", icon: "school", title: "مدرسة", time: "7:00–1:00", task: "المدرسة" },
+                { id: "mon_3", icon: "utensils", title: "غداء وراحة", time: "1:00–2:00", task: "غداء + راحة" },
+                { id: "mon_4", icon: "code", title: "برمجة", time: "2:00–4:00", task: "برمجة" },
+                { id: "mon_5", icon: "book-open", title: "واجبات", time: "4:00–5:00", task: "واجبات + تقويمات" },
+                { id: "mon_6", icon: "flask-conical", title: "علوم متكاملة", time: "5:00–8:00", task: "مذاكرة العلوم" },
+                { id: "mon_7", icon: "pen-tool", title: "كتابة", time: "8:00–9:00", task: "كتابة" },
+                { id: "mon_8", icon: "moon", title: "راحة", time: "9:00–10:00", task: "بدون شاشات" }
+            ],
+            "الثلاثاء": [
+                { id: "tue_1", icon: "activity", title: "تمارين", time: "6:00–6:30", task: "تمرين صباحي" },
+                { id: "tue_2", icon: "school", title: "مدرسة", time: "7:00–1:00", task: "المدرسة" },
+                { id: "tue_3", icon: "utensils", title: "غداء وراحة", time: "1:00–2:00", task: "غداء + راحة" },
+                { id: "tue_4", icon: "code", title: "برمجة", time: "2:00–4:00", task: "برمجة" },
+                { id: "tue_5", icon: "book-open", title: "واجبات", time: "4:00–5:00", task: "واجبات + تقويمات" },
+                { id: "tue_6", icon: "calculator", title: "رياضيات", time: "5:00–8:00", task: "مذاكرة الرياضيات" },
+                { id: "tue_7", icon: "coffee", title: "راحة", time: "8:00–9:00", task: "وقت شخصي" },
+                { id: "tue_8", icon: "moon", title: "راحة", time: "9:00–10:00", task: "بدون شاشات" }
+            ],
+            "الأربعاء": [
+                { id: "wed_1", icon: "activity", title: "تمارين", time: "6:00–6:30", task: "تمرين صباحي" },
+                { id: "wed_2", icon: "school", title: "مدرسة", time: "7:00–1:00", task: "المدرسة" },
+                { id: "wed_3", icon: "utensils", title: "غداء وراحة", time: "1:00–2:00", task: "غداء + راحة" },
+                { id: "wed_4", icon: "code", title: "برمجة", time: "2:00–4:00", task: "برمجة" },
+                { id: "wed_5", icon: "book-open", title: "واجبات", time: "4:00–5:00", task: "واجبات + تقويمات" },
+                { id: "wed_6", icon: "globe", title: "إنجليزي", time: "5:00–8:00", task: "مذاكرة الإنجليزي" },
+                { id: "wed_7", icon: "coffee", title: "راحة", time: "8:00–9:00", task: "وقت شخصي" },
+                { id: "wed_8", icon: "moon", title: "راحة", time: "9:00–10:00", task: "بدون شاشات" }
+            ],
+            "الخميس": [
+                { id: "thu_1", icon: "activity", title: "تمارين", time: "6:00–6:30", task: "تمرين صباحي" },
+                { id: "thu_2", icon: "school", title: "مدرسة", time: "7:00–1:00", task: "المدرسة" },
+                { id: "thu_3", icon: "utensils", title: "غداء وراحة", time: "1:00–2:00", task: "غداء + راحة" },
+                { id: "thu_4", icon: "code", title: "برمجة", time: "2:00–4:00", task: "برمجة" },
+                { id: "thu_5", icon: "book-open", title: "واجبات", time: "4:00–5:00", task: "واجبات + تقويمات" },
+                { id: "thu_6", icon: "languages", title: "عربي", time: "5:00–8:00", task: "مذاكرة العربي" },
+                { id: "thu_7", icon: "pen-tool", title: "كتابة", time: "8:00–9:00", task: "كتابة" },
+                { id: "thu_8", icon: "moon", title: "راحة", time: "9:00–10:00", task: "بدون شاشات" }
+            ],
+            "الجمعة": [
+                { id: "fri_1", icon: "activity", title: "تمارين", time: "6:00–6:30", task: "تمرين صباحي" },
+                { id: "fri_2", icon: "sparkles", title: "وقت حر", time: "7:00–1:00", task: "Free" },
+                { id: "fri_3", icon: "utensils", title: "غداء وراحة", time: "1:00–2:00", task: "غداء + راحة" },
+                { id: "fri_4", icon: "code", title: "برمجة", time: "2:00–4:00", task: "برمجة" },
+                { id: "fri_5", icon: "sparkles", title: "وقت حر", time: "4:00–5:00", task: "Free" },
+                { id: "fri_6", icon: "smile", title: "وقت حر", time: "5:00–8:00", task: "راحة / خروج / هوايات" },
+                { id: "fri_7", icon: "coffee", title: "وقت حر", time: "8:00–9:00", task: "وقت شخصي" },
+                { id: "fri_8", icon: "moon", title: "راحة", time: "9:00–10:00", task: "بدون شاشات" }
+            ]
+        };
+
+        // LocalStorage Management
+        let completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '{}');
+        const days = Object.keys(scheduleData);
+        
+        // Auto-select current day
+        const dayMap = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        const todayName = dayMap[new Date().getDay()];
+        let selectedDay = scheduleData[todayName] ? todayName : "السبت";
+
+        function toggleTask(id) {
+            completedTasks[id] = !completedTasks[id];
+            localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+            renderSchedule();
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const items = scheduleData[selectedDay];
+            const completedCount = items.filter(item => completedTasks[item.id]).length;
+            const percent = items.length ? Math.round((completedCount / items.length) * 100) : 0;
+
+            document.getElementById('progressPercent').innerText = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+        }
+
+        function renderDays() {
+            const daySelector = document.getElementById('daySelector');
+            daySelector.innerHTML = '';
+            days.forEach(day => {
+                const btn = document.createElement('button');
+                btn.className = `day-btn ${day === selectedDay ? 'active' : ''}`;
+                btn.innerText = day;
+                btn.onclick = () => {
+                    selectedDay = day;
+                    renderDays();
+                    renderSchedule();
+                    updateProgress();
+                };
+                daySelector.appendChild(btn);
+            });
+        }
+
+        function renderSchedule() {
+            const container = document.getElementById('scheduleContainer');
+            container.innerHTML = '';
+            const items = scheduleData[selectedDay];
+
+            items.forEach(item => {
+                const isDone = !!completedTasks[item.id];
+                const card = document.createElement('div');
+                card.className = `schedule-card ${isDone ? 'completed' : ''}`;
+                card.onclick = () => toggleTask(item.id);
+
+                card.innerHTML = `
+                    <div class="card-right">
+                        <div class="checkbox-wrapper">
+                            ${isDone ? '<i data-lucide="check" style="width:16px; height:16px;"></i>' : ''}
+                        </div>
+                        <div class="icon-box">
+                            <i data-lucide="${item.icon}"></i>
+                        </div>
+                        <div class="details">
+                            <span class="activity-title">${item.title}</span>
+                            <span class="task-desc">${item.task}</span>
+                        </div>
+                    </div>
+                    <span class="time-badge">${item.time}</span>
+                `;
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Notification Logic
+        function toggleNotifications() {
+            if (!("Notification" in window)) {
+                alert("متصفحك لا يدعم الإشعارات");
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                alert("الإشعارات مفعلة بالفعل!");
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("جدولي الأسبوعي", {
+                            body: "تم تفعيل الإشعارات بنجاح!",
+                            icon: "https://unpkg.com/lucide-static@0.321.0/icons/calendar-check-2.svg"
+                        });
+                        document.getElementById('notifBtn').classList.add('active');
+                    }
+                });
+            }
+        }
+
+        // PWA Installation
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwaBanner').style.display = 'flex';
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('pwaBanner').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Service Worker Dynamic Registration
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
+                self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+        }
+
+        // Init
+        renderDays();
+        renderSchedule();
+        updateProgress();
+    </script>
+</body>
+</html>
