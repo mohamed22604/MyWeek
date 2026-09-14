@@ -300,6 +300,72 @@
             font-weight: bold;
             cursor: pointer;
         }
+
+        .study-shell {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .study-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section-heading h2 { font-size: 1.05rem; }
+        .section-heading p, .muted { color: var(--text-muted); font-size: 0.78rem; margin-top: 4px; }
+        .focus-task { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .focus-task strong { display: block; font-size: 1.1rem; }
+        .focus-task span { color: var(--text-muted); font-size: 0.8rem; }
+        .focus-timer { text-align: center; padding: 18px 0 8px; }
+        .timer-label { color: var(--accent); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; }
+        .timer-display { font-size: clamp(3rem, 9vw, 5.5rem); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: 0.03em; margin: 10px 0 16px; }
+        .timer-actions, .task-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .primary-btn, .secondary-btn { border: 1px solid var(--accent); border-radius: 9px; padding: 9px 13px; font-weight: 700; cursor: pointer; transition: transform 0.2s, background 0.2s; }
+        .primary-btn { background: var(--accent); color: #07111d; }
+        .secondary-btn { background: transparent; color: var(--text); border-color: var(--border); }
+        .primary-btn:active, .secondary-btn:active { transform: scale(0.96); }
+        .focus-metrics, .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+        .metric, .summary-item { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 10px; }
+        .metric strong, .summary-item strong { display: block; font-size: 1rem; }
+        .metric span, .summary-item span { color: var(--text-muted); font-size: 0.72rem; }
+        .technique-list { display: grid; gap: 8px; }
+        .technique { padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.02); }
+        .technique strong { color: var(--accent); font-size: 0.86rem; }
+        .technique p { color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; margin: 4px 0 8px; }
+        .technique button { background: none; color: var(--text); border: 0; padding: 0; text-decoration: underline; cursor: pointer; font-size: 0.76rem; }
+        .task-study-progress { margin-top: 8px; max-width: 180px; }
+        .task-study-progress span { color: var(--text-muted); font-size: 0.7rem; }
+        .task-actions { justify-content: flex-start; margin-top: 8px; }
+        .task-actions button { font-size: 0.72rem; padding: 6px 9px; }
+        .study-mode { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(11, 15, 25, 0.97); }
+        .study-mode.open { display: flex; }
+        .study-mode-content { width: min(560px, 100%); text-align: center; }
+        .study-mode h2 { color: var(--accent); font-size: 0.8rem; letter-spacing: 0.18em; }
+        .study-mode h3 { font-size: clamp(1.6rem, 5vw, 2.6rem); margin: 12px 0 8px; }
+        .mode-technique { color: var(--text-muted); margin-bottom: 24px; }
+        .mode-progress { color: var(--text-muted); font-size: 0.8rem; margin-bottom: 16px; }
+
+        @media (max-width: 720px) {
+            body { padding: 12px; }
+            .study-shell { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1rem; }
+            .icon-btn { padding: 8px; }
+            .icon-btn span { display: none; }
+            .schedule-card { align-items: flex-start; }
+            .time-badge { margin-top: 3px; }
+        }
     </style>
 </head>
 <body>
@@ -332,11 +398,44 @@
         </div>
     </div>
 
+    <section class="study-shell">
+        <div class="study-panel" id="todayFocus">
+            <div class="section-heading">
+                <div><h2>Today's Focus</h2><p>Plan → focus → make progress</p></div>
+                <i data-lucide="timer" style="color: var(--accent);"></i>
+            </div>
+            <div class="focus-task"><div><span>Current task</span><strong id="focusTaskName">Choose a task below</strong></div><button class="primary-btn" onclick="startFocus()">Start Focus</button></div>
+            <div class="focus-timer"><div class="timer-label" id="timerModeLabel">FOCUS</div><div class="timer-display" id="timerDisplay">25:00</div><div class="timer-actions"><button class="secondary-btn" id="pauseBtn" onclick="toggleTimer()">Pause</button><button class="secondary-btn" onclick="resetTimer()">Reset</button><button class="secondary-btn" onclick="skipTimer()">Skip</button></div></div>
+            <div class="focus-metrics"><div class="metric"><strong id="todayPomodoros">0</strong><span>Pomodoros today</span></div><div class="metric"><strong id="todayFocusTime">0m</strong><span>Focus time</span></div><div class="metric"><strong id="todayTaskPercent">0%</strong><span>Tasks complete</span></div></div>
+        </div>
+        <div class="study-panel">
+            <div class="section-heading"><div><h2>Study Techniques</h2><p>Choose one small action</p></div><i data-lucide="brain" style="color: var(--accent);"></i></div>
+            <div class="technique-list" id="techniqueList"></div>
+        </div>
+    </section>
+
+    <section class="study-panel" style="margin-bottom: 20px;">
+        <div class="section-heading"><div><h2>Today's Summary</h2><p id="streakLabel">Build your study streak with one meaningful session.</p></div><strong id="streakValue" style="color: var(--accent);">0 day streak</strong></div>
+        <div class="summary-grid"><div class="summary-item"><strong id="summaryTasks">0 / 0</strong><span>Tasks completed</span></div><div class="summary-item"><strong id="summaryPomodoros">0</strong><span>Pomodoros</span></div><div class="summary-item"><strong id="summaryTime">0m</strong><span>Focus time</span></div></div>
+    </section>
+
     <!-- Day Navigation -->
     <div class="day-selector" id="daySelector"></div>
 
     <!-- Task List Container -->
     <div class="schedule-list" id="scheduleContainer"></div>
+
+    <div class="study-mode" id="studyMode" role="dialog" aria-modal="true">
+        <div class="study-mode-content">
+            <h2>STUDY MODE</h2>
+            <h3 id="modeTaskName">Choose a task</h3>
+            <div class="mode-technique">Technique: <strong id="modeTechnique">Active Recall</strong></div>
+            <div class="timer-label" id="modeTimerLabel">FOCUS</div>
+            <div class="timer-display" id="modeTimerDisplay">25:00</div>
+            <div class="mode-progress" id="modeProgress">Focus session #1</div>
+            <div class="timer-actions"><button class="secondary-btn" onclick="toggleTimer()">Pause / Resume</button><button class="primary-btn" onclick="finishSession()">Finish Session</button><button class="secondary-btn" onclick="closeStudyMode()">Close</button></div>
+        </div>
+    </div>
 
     <script>
         const scheduleData = {
@@ -412,14 +511,33 @@
             ]
         };
 
-        // LocalStorage Management
+        // Existing task state stays separate from study history for backwards compatibility.
         let completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '{}');
+        let studyData = JSON.parse(localStorage.getItem('myweekStudyData') || '{"sessions":[],"streak":0,"lastStudyDate":null}');
         const days = Object.keys(scheduleData);
-        
-        // Auto-select current day
         const dayMap = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         const todayName = dayMap[new Date().getDay()];
         let selectedDay = scheduleData[todayName] ? todayName : "السبت";
+        let selectedTaskId = null;
+        let selectedTechnique = 'Active Recall';
+        let timer = { mode: 'focus', remaining: 1500, running: false, interval: null };
+
+        const techniques = [
+            { name: 'Active Recall', description: 'Close your notes and explain what you remember.', action: 'Answer three questions from memory.' },
+            { name: 'Spaced Repetition', description: 'Return to the material after a gap instead of cramming.', action: 'Schedule a quick review tomorrow.' },
+            { name: 'Feynman Technique', description: 'Explain a difficult idea in plain language.', action: 'Teach this topic as if to a beginner.' },
+            { name: 'Blurting', description: 'Write everything you know, then check the gaps.', action: 'Blurt the key ideas for five minutes.' },
+            { name: 'Practice Testing', description: 'Use questions to test understanding before rereading.', action: 'Complete five practice questions.' },
+            { name: 'Interleaving', description: 'Mix related problem types to strengthen recognition.', action: 'Alternate between two problem types.' }
+        ];
+
+        function saveStudyData() { localStorage.setItem('myweekStudyData', JSON.stringify(studyData)); }
+        function dateKey(date = new Date()) { return date.toISOString().slice(0, 10); }
+        function todaySessions() { return studyData.sessions.filter(session => session.date === dateKey()); }
+        function taskForId(id) { return Object.values(scheduleData).flat().find(item => item.id === id); }
+        function taskPomodoros(id) { return studyData.sessions.filter(session => session.taskId === id && session.type === 'focus').length; }
+        function formatMinutes(minutes) { return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`; }
+        function formatTimer(seconds) { return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 
         function toggleTask(id) {
             completedTasks[id] = !completedTasks[id];
@@ -432,9 +550,28 @@
             const items = scheduleData[selectedDay];
             const completedCount = items.filter(item => completedTasks[item.id]).length;
             const percent = items.length ? Math.round((completedCount / items.length) * 100) : 0;
-
             document.getElementById('progressPercent').innerText = `${percent}%`;
             document.getElementById('progressBar').style.width = `${percent}%`;
+
+            const todayItems = scheduleData[todayName] || [];
+            const todayCompleted = todayItems.filter(item => completedTasks[item.id]).length;
+            const sessions = todaySessions();
+            const focusMinutes = sessions.reduce((total, session) => total + (session.minutes || 0), 0);
+            document.getElementById('todayPomodoros').innerText = sessions.filter(session => session.type === 'focus').length;
+            document.getElementById('todayFocusTime').innerText = formatMinutes(focusMinutes);
+            document.getElementById('todayTaskPercent').innerText = `${todayItems.length ? Math.round(todayCompleted / todayItems.length * 100) : 0}%`;
+            document.getElementById('summaryTasks').innerText = `${todayCompleted} / ${todayItems.length}`;
+            document.getElementById('summaryPomodoros').innerText = sessions.filter(session => session.type === 'focus').length;
+            document.getElementById('summaryTime').innerText = formatMinutes(focusMinutes);
+            document.getElementById('streakValue').innerText = `🔥 ${studyData.streak || 0} day streak`;
+            document.getElementById('streakLabel').innerText = studyData.streak ? 'A meaningful focus session keeps it going.' : 'Build your study streak with one meaningful session.';
+
+            const currentTask = taskForId(selectedTaskId) || todayItems[0];
+            if (currentTask) {
+                selectedTaskId = currentTask.id;
+                document.getElementById('focusTaskName').innerText = currentTask.task || currentTask.title;
+                document.getElementById('modeTaskName').innerText = currentTask.task || currentTask.title;
+            }
         }
 
         function renderDays() {
@@ -461,6 +598,7 @@
 
             items.forEach(item => {
                 const isDone = !!completedTasks[item.id];
+                const completedPomodoros = taskPomodoros(item.id);
                 const card = document.createElement('div');
                 card.className = `schedule-card ${isDone ? 'completed' : ''}`;
                 card.onclick = () => toggleTask(item.id);
@@ -476,6 +614,8 @@
                         <div class="details">
                             <span class="activity-title">${item.title}</span>
                             <span class="task-desc">${item.task}</span>
+                            <div class="task-study-progress"><span>${completedPomodoros} / 5 Pomodoros · ${completedPomodoros * 25}m focused</span></div>
+                            <div class="task-actions"><button class="primary-btn" onclick="selectTask('${item.id}'); startFocus(); event.stopPropagation();">Start Focus</button></div>
                         </div>
                     </div>
                     <span class="time-badge">${item.time}</span>
@@ -484,6 +624,129 @@
             });
 
             lucide.createIcons();
+        }
+
+        function renderTechniques() {
+            document.getElementById('techniqueList').innerHTML = techniques.map(technique => `
+                <div class="technique"><strong>${technique.name}</strong><p>${technique.description}</p><button onclick="selectTechnique('${technique.name}')">${technique.action}</button></div>
+            `).join('');
+        }
+
+        function selectTask(id) {
+            selectedTaskId = id;
+            const task = taskForId(id);
+            if (task) {
+                document.getElementById('focusTaskName').innerText = task.task || task.title;
+                document.getElementById('modeTaskName').innerText = task.task || task.title;
+            }
+        }
+
+        function selectTechnique(name) {
+            selectedTechnique = name;
+            document.getElementById('modeTechnique').innerText = name;
+            document.getElementById('studyMode').classList.add('open');
+        }
+
+        function startFocus() {
+            const task = taskForId(selectedTaskId) || (scheduleData[selectedDay] || [])[0];
+            if (!task) return;
+            selectTask(task.id);
+            if (timer.mode !== 'focus' || timer.remaining === 0) resetTimer();
+            document.getElementById('studyMode').classList.add('open');
+            startTimer();
+        }
+
+        function startTimer() {
+            if (timer.running) return;
+            timer.running = true;
+            timer.interval = setInterval(() => {
+                timer.remaining -= 1;
+                renderTimer();
+                if (timer.remaining <= 0) completeTimerPhase();
+            }, 1000);
+            renderTimer();
+        }
+
+        function toggleTimer() {
+            if (timer.running) {
+                clearInterval(timer.interval);
+                timer.running = false;
+            } else {
+                startTimer();
+            }
+            renderTimer();
+        }
+
+        function resetTimer() {
+            clearInterval(timer.interval);
+            timer.running = false;
+            timer.mode = 'focus';
+            timer.remaining = 1500;
+            renderTimer();
+        }
+
+        function skipTimer() {
+            clearInterval(timer.interval);
+            timer.running = false;
+            timer.mode = timer.mode === 'focus' ? 'shortBreak' : 'focus';
+            timer.remaining = timer.mode === 'focus' ? 1500 : 300;
+            renderTimer();
+        }
+
+        function completeTimerPhase() {
+            clearInterval(timer.interval);
+            timer.running = false;
+            if (timer.mode === 'focus') {
+                recordFocusSession();
+                const focusCount = todaySessions().filter(session => session.type === 'focus').length;
+                timer.mode = focusCount % 4 === 0 ? 'longBreak' : 'shortBreak';
+                timer.remaining = timer.mode === 'longBreak' ? 1800 : 300;
+                notifyUser('Focus session finished', timer.mode === 'longBreak' ? 'Take a longer break.' : 'Take a short break.');
+            } else {
+                timer.mode = 'focus';
+                timer.remaining = 1500;
+                notifyUser('Break finished', 'Ready for your next focus session?');
+            }
+            renderTimer();
+        }
+
+        function recordFocusSession() {
+            if (!selectedTaskId) return;
+            const today = dateKey();
+            studyData.sessions.push({ date: today, taskId: selectedTaskId, minutes: 25, type: 'focus' });
+            if (studyData.lastStudyDate !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                studyData.streak = studyData.lastStudyDate === dateKey(yesterday) ? (studyData.streak || 0) + 1 : 1;
+                studyData.lastStudyDate = today;
+            }
+            saveStudyData();
+            renderSchedule();
+            updateProgress();
+        }
+
+        function finishSession() {
+            if (timer.mode === 'focus' && timer.remaining < 1500) recordFocusSession();
+            clearInterval(timer.interval);
+            timer.running = false;
+            closeStudyMode();
+            resetTimer();
+        }
+
+        function renderTimer() {
+            const label = timer.mode === 'focus' ? 'FOCUS' : timer.mode === 'longBreak' ? 'LONG BREAK' : 'SHORT BREAK';
+            document.getElementById('timerModeLabel').innerText = label;
+            document.getElementById('modeTimerLabel').innerText = label;
+            document.getElementById('timerDisplay').innerText = formatTimer(timer.remaining);
+            document.getElementById('modeTimerDisplay').innerText = formatTimer(timer.remaining);
+            document.getElementById('pauseBtn').innerText = timer.running ? 'Pause' : 'Resume';
+            document.getElementById('modeProgress').innerText = `Focus session #${todaySessions().filter(session => session.type === 'focus').length + 1}`;
+        }
+
+        function closeStudyMode() { document.getElementById('studyMode').classList.remove('open'); }
+        function notifyUser(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body });
+            else alert(`${title}\n${body}`);
         }
 
         // Notification Logic
@@ -541,7 +804,10 @@
         // Init
         renderDays();
         renderSchedule();
+        renderTechniques();
+        renderTimer();
         updateProgress();
+        lucide.createIcons();
     </script>
 </body>
 </html>
